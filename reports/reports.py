@@ -74,8 +74,8 @@ def activity_lastweek(course_list=course_list):
 	# activity for the last week including number of students active, nevents, nvideo_viewed, nproblem_attempted, nforum_posts
 	# data is updated in bigquery once a week on Monday morning, run the command on Monday afternoon => activity for the last week
 	pcd_tables = ',\n'.join(['[%s.person_course_day]' % x for x in course_list])
-	query = """SELECT course_id, Count(Distinct username) As nactive, sum(nevents) As nevents, sum(nvideos_viewed) As nvideos_viewed, 
-	            sum(nproblems_attempted) As nproblems_attempted, sum(nforum_posts) As nforum_posts FROM """ + pcd_tables + \
+	query = """SELECT course_id, Count(Distinct username) As nactive, sum(nevents) As nevents, sum(nvideos_viewed) As nvideo_views, 
+	            sum(nproblems_attempted) As nproblem_attempts, sum(nforum_posts) As nforum_posts FROM """ + pcd_tables + \
 	            " Where date >= '" +  week_ago.strftime('%Y-%m-%d') + "' Group By course_id Order By course_id"
 	activity = pd.io.gbq.read_gbq(query, project_id='ubcxdata', verbose=False, private_key='ubcxdata.json')
 	activity.set_index('course_id', inplace=True)
@@ -85,7 +85,7 @@ def activity_lastweek(course_list=course_list):
 		query = "SELECT sum(n_attempts) FROM [UBCx__UseGen_1x__1T2016.person_item] Where Date(date) >= '" + \
             week_ago.strftime('%Y-%m-%d') + "'"
 		value = pd.io.gbq.read_gbq(query, project_id='ubcxdata', verbose=False, private_key='ubcxdata.json').values[0][0]
-		nactive.ix['UBCx/UseGen.1x/1T2016', 'nproblem_attempts'] = int(value)
+		activity.ix['UBCx/UseGen.1x/1T2016', 'nproblem_attempts'] = int(value)
 
 	if 'UBCx__UseGen_2x__1T2016' in course_list:
 		query = "SELECT sum(n_attempts) FROM [UBCx__UseGen_2x__1T2016.person_item] Where Date(date) >= '" + \

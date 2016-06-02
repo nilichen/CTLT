@@ -24,24 +24,25 @@
 
 cd to reports directory, python
 
-from reports import daily_lastweek, uptodate, activity_lastweek
-
 - default course_list
 
-daily_lastweek() => generates daily+date.csv (eg. daily2016-06-01.csv)
+~~~~
+from reports import daily_lastweek, uptodate, activity_lastweek
 
-uptodate() => generates daily+date.csv (eg. uptodate2016-06-01.csv)
-
-activity_lastweek() => generates activity+date.csv (eg. activity2016-06-01.csv)
-
+daily_lastweek()    # generates daily+date.csv (eg. daily2016-06-01.csv)
+uptodate()          # generates daily+date.csv (eg. uptodate2016-06-01.csv)
+activity_lastweek() # generates activity+date.csv (eg. activity2016-06-01.csv)
+~~~~
 - specify courses
 
-course_list = [ 'UBCx__Marketing1x__3T2015',  'UBCx__Climate1x__2T2016', 'UBCx__SPD1x__2T2016', 'UBCx__SPD2x__2T2016', 'UBCx__SPD3x__2T2016']
+~~~~
+from reports import daily_lastweek, uptodate, activity_lastweek
 
+course_list = [ 'UBCx__Marketing1x__3T2015',  'UBCx__Climate1x__2T2016',
+                'UBCx__SPD1x__2T2016', 'UBCx__SPD2x__2T2016', 'UBCx__SPD3x__2T2016']
 prices = [50, 49, 49, 49, 49]
 
 daily_lastweek(course_list)
-
 uptodate(course_list, prices)
-
 activity_lastweek(course_list)
+~~~~
