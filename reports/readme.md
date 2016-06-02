@@ -22,7 +22,7 @@
 
 **Example use:**
 
-cd to reports directory, python
+cd to reports directory and run python
 
 - default course_list
 
@@ -30,7 +30,7 @@ cd to reports directory, python
 from reports import daily_lastweek, uptodate, activity_lastweek
 
 daily_lastweek()    # generates daily+date.csv (eg. daily2016-06-01.csv)
-uptodate()          # generates daily+date.csv (eg. uptodate2016-06-01.csv)
+uptodate()          # generates uptodate+date.csv (eg. uptodate2016-06-01.csv)
 activity_lastweek() # generates activity+date.csv (eg. activity2016-06-01.csv)
 ~~~~
 - specify courses
