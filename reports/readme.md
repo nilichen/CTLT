@@ -20,7 +20,7 @@
 
 - activity_lastweek: run weekly (Monday afternoon) for activity information during the last week including number of students active, total number of events, total number of video views, problem attempts and forum posts
 
-** Example use: **
+**Example use:**
 
 cd to reports directory, python
 
