@@ -49,7 +49,7 @@ def daily_lastweek(course_list=course_list):
 	overall = pd.pivot_table(pd.concat([enroll, unenroll, verify]), index=['course_id', 'type'], columns='date', values='num').fillna(0)
 	overall['week_total'] = overall.sum(axis=1)
 
-	#print overall
+	print overall
 	filename = 'daily' + str(today) + '.csv'
 	overall.to_csv(filename)
 
@@ -65,7 +65,7 @@ def uptodate(course_list=course_list, prices=prices):
 	verify_todate['revenue_todate'] = prices * verify_todate.nverified
 	verify_todate.set_index('course_id', inplace=True)
 
-	#print verify_todate
+	print verify_todate
 	filename = 'uptodate' + str(today) + '.csv'
 	verify_todate.to_csv(filename)
 
@@ -91,8 +91,8 @@ def activity_lastweek(course_list=course_list):
 		query = "SELECT sum(n_attempts) FROM [UBCx__UseGen_2x__1T2016.person_item] Where Date(date) >= '" + \
             week_ago.strftime('%Y-%m-%d') + "'"
 		value = pd.io.gbq.read_gbq(query, project_id='ubcxdata', verbose=False, private_key='ubcxdata.json').values[0][0]
-		nactive.ix['UBCx/UseGen.2x/1T2016', 'nproblem_attempts'] = int(value)
+		activity.ix['UBCx/UseGen.2x/1T2016', 'nproblem_attempts'] = int(value)
 
-	#print verify_todate
+	print activity
 	filename = 'activity' + str(today) + '.csv'
 	activity.to_csv(filename)
