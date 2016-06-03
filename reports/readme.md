@@ -1,10 +1,8 @@
 ## How to use
 
-- dependency: [pandas](https://github.com/pydata/pandas), recommend to install [Anaconda](https://www.continuum.io/downloads)
+- **Dependency**: [pandas](https://github.com/pydata/pandas), recommend to install [Anaconda](https://www.continuum.io/downloads)
 
-- leave the credential file 'ubcxdata.json' in the reports directory
-
-- default course_list: currently active courses:
+- **efault course_list**: currently active courses:
   - 'UBCx/Marketing1x/3T2015'
   - 'UBCx/Climate1x/2T2016',
   - 'UBCx/SPD1x/2T2016',
@@ -14,15 +12,17 @@
   - 'UBCx/UseGen.2x/1T2016'
 
 
-- daily_lastweek: can run daily for information about number students enrolled, unenrolled and verified for the last week
+- **daily_lastweek**: can run daily (in the afternoon) for information about number students enrolled, unenrolled and verified for the last week
 
-- uptodate: run weekly (Monday afternoon because data in bigquery is updated once a week on Monday Morning) for up-to-date (last Sunday) information about total number of students registered and verified, % students verified and revenue up-to-date
+- **uptodate**: run weekly (Monday afternoon because data in bigquery is updated once a week on Monday Morning) for up-to-date (last Sunday) information about total number of students registered and verified, % students verified and revenue up-to-date
 
-- activity_lastweek: run weekly (Monday afternoon) for activity information during the last week including number of students active, total number of events, total number of video views, problem attempts and forum posts
+- **activity_lastweek**: run weekly (Monday afternoon) for activity information during the last week including number of students active, total number of events, total number of video views, problem attempts and forum posts
 
 **Example use:**
 
-cd to reports directory and run python
+- put the credential **'ubcxdata.json'** in the reports directory
+
+- cd to reports directory and run python
 
 - default course_list
 
