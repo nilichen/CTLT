@@ -2,7 +2,7 @@
 
 - **Dependency**: [pandas](https://github.com/pydata/pandas), recommend to install [Anaconda](https://www.continuum.io/downloads)
 
-- **efault course_list**: currently active courses:
+- **Default course_list**: currently active courses:
   - 'UBCx/Marketing1x/3T2015'
   - 'UBCx/Climate1x/2T2016',
   - 'UBCx/SPD1x/2T2016',
