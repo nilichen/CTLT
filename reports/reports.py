@@ -1,6 +1,8 @@
 from __future__ import division
 import pandas as pd
 import datetime 
+import json
+import urllib2
 
 # currently running courses
 course_list = [
@@ -18,8 +20,20 @@ prices = [49, 50, 49, 49, 49, 49, 49]
 today = datetime.date.today()
 week_ago = today - datetime.timedelta(days=7)
 
+def homepage_courses():
+    """Date and a list of popular courses on the homepage on that day"""
+
+    url = 'https://www.edx.org/api/discovery/v1/cards?limit=12&tags=14e5ea80-f725-4cd6-82f6-6d2bd63d5159'
+    data = json.loads(urllib2.urlopen(url).read())
+    with open('homepage_courses.txt', 'a+') as f:
+        f.write(str(today) + '\n')
+        for entry in data:
+            f.write(entry['title'].strip().encode('utf8') + '\n')
+        f.write('\n\n')
+
+
 def daily_lastweek(course_list=course_list):
-    """daily report for number of students who enrolled, unenrolled and verified for the last week"""
+    """Daily report for number of students who enrolled, unenrolled and verified for the last week"""
 
     enroll_tables = ',\n'.join(['[%s.enrollment_events]' % x for x in course_list])
     verify_tables = ',\n'.join(['[%s.person_enrollment_verified]' % x for x in course_list])
@@ -62,36 +76,14 @@ def daily_lastweek(course_list=course_list):
     overall.to_csv(filename)
 
 
-def uptodate(course_list=course_list, prices=prices):
-    """
-    up-to-date (last Sunday) information about number of students registered, verifed, % verified, revenue;
-    data (this Monday not included) is updated in bigquery once a week on Monday morning, 
-    run the command on Monday afternoon.
-    """
-    
-    pc_tables = ',\n'.join(['[%s.person_course]' % x for x in course_list])
-    query = \
-    """Select course_id, count(*) As nregistered, 
-    Sum(Case When mode='verified' Then 1 Else 0 End) As nverified
-    From {0}
-    Group By course_id Order By course_id""".format(pc_tables)
-    verify_todate = pd.io.gbq.read_gbq(query, project_id='ubcxdata', verbose=False, private_key='ubcxdata.json')
-    verify_todate['pct_verified'] = verify_todate.nverified / verify_todate.nregistered
-    verify_todate['revenue_todate'] = prices * verify_todate.nverified
-    verify_todate.set_index('course_id', inplace=True)
-
-    print verify_todate
-    filename = 'uptodate' + str(today) + '.csv'
-    verify_todate.to_csv(filename)
-
 
 def activity_lastweek(course_list=course_list):
     """
-    activity for the last week including number of students active, nevents, 
+    Activity for the last week including number of students active, nevents, 
     nvideo_viewed, nproblem_attempted, nforum_posts;
-    data is updated in bigquery once a week on Monday morning, 
+    Data is updated in bigquery once a week on Monday morning, 
     run the command on Monday afternoon => activity for the last week;
-    nproblem_attempts for useGen.1x and useGen.2x need recalculate 
+    Nproblem_attempts for useGen.1x and useGen.2x need recalculate 
     due to different implementation of course structure.
     """
     
@@ -127,3 +119,28 @@ def activity_lastweek(course_list=course_list):
     print activity
     filename = 'activity' + str(today) + '.csv'
     activity.to_csv(filename)
+
+
+def uptodate(course_list=course_list, prices=prices):
+    """
+    Up-to-date (last Sunday) information about number of students registered, verifed, % verified, revenue;
+    Data (this Monday not included) is updated in bigquery once a week on Monday morning, 
+    run the command on Monday afternoon.
+    """
+    
+    pc_tables = ',\n'.join(['[%s.person_course]' % x for x in course_list])
+    query = \
+    """Select course_id, count(*) As nregistered, 
+    Sum(Case When mode='verified' Then 1 Else 0 End) As nverified
+    From {0}
+    Group By course_id Order By course_id""".format(pc_tables)
+    verify_todate = pd.io.gbq.read_gbq(query, project_id='ubcxdata', verbose=False, private_key='ubcxdata.json')
+    verify_todate['pct_verified'] = verify_todate.nverified / verify_todate.nregistered
+    verify_todate['revenue_todate'] = prices * verify_todate.nverified
+    verify_todate.set_index('course_id', inplace=True)
+
+    print verify_todate
+    filename = 'uptodate' + str(today) + '.csv'
+    verify_todate.to_csv(filename)
+
+
