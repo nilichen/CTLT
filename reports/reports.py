@@ -1,8 +1,6 @@
 from __future__ import division
 import pandas as pd
 import datetime 
-import json
-import urllib2
 
 # currently running courses
 course_list = [
@@ -20,19 +18,15 @@ prices = [49, 50, 49, 49, 49, 49, 49]
 today = datetime.date.today()
 week_ago = today - datetime.timedelta(days=7)
 
-def homepage_courses():
-    """Date and a list of popular courses on the homepage on that day"""
-
-    url = 'https://www.edx.org/api/discovery/v1/cards?limit=12&tags=14e5ea80-f725-4cd6-82f6-6d2bd63d5159'
-    data = json.loads(urllib2.urlopen(url).read())
-    with open('homepage_courses.txt', 'a+') as f:
-        f.write(str(today) + '\n')
-        for entry in data:
-            f.write(entry['title'].strip().encode('utf8') + '\n')
-        f.write('\n\n')
+def appendDFToCSV(df, csvFilePath):
+    import os
+    if not os.path.isfile(csvFilePath):
+        df.to_csv(csvFilePath, mode='a')
+    else:
+        df.to_csv(csvFilePath, mode='a', header=False)
 
 
-def daily_lastweek(course_list=course_list):
+def enroll_unenroll_verify(course_list=course_list):
     """Daily report for number of students who enrolled, unenrolled and verified for the last week"""
 
     enroll_tables = ',\n'.join(['[%s.enrollment_events]' % x for x in course_list])
@@ -58,22 +52,25 @@ def daily_lastweek(course_list=course_list):
 
     verify_tables = ',\n'.join(['[%s.person_enrollment_verified]' % x for x in course_list])
     query = \
-    """SELECT course_id, Date(verified_enroll_time) As date, count(*) As num 
+    """SELECT course_id, Date(verified_enroll_time) As date, Count(*) As num 
     FROM {0}
     Where Date(verified_enroll_time) >= '{1}'
     Group By course_id, date Order by course_id, date""".format(verify_tables, week_ago.strftime('%Y-%m-%d'))
     verify = pd.io.gbq.read_gbq(query, project_id='ubcxdata', verbose=False, private_key='ubcxdata.json')
+    for course in course_list:
+        course = course.replace('__', '/').replace('_', '.')
+        if course not in verify.course_id.values:
+            verify.loc[len(verify)] = [course, week_ago.strftime('%Y-%m-%d'), 0]
 
     enroll['type'] = 'enroll'
     unenroll['type'] = 'unenroll'
     verify['type'] = 'verify'
-    overall = pd.pivot_table(pd.concat([enroll, unenroll, verify]), index=['course_id', 'type'],
-                             columns='date', values='num').fillna(0)
-    overall['week_total'] = overall.sum(axis=1)
+    overall = pd.pivot_table(pd.concat([enroll, unenroll, verify]), index='date',
+        columns=['course_id', 'type'], values='num').fillna(0)
 
     print overall
-    filename = 'daily' + str(today) + '.csv'
-    overall.to_csv(filename)
+    filepath = '/Users/katrinani/Google Drive/Data scripts/enroll_unenroll_verify.csv'
+    appendDFToCSV(overall, filepath)
 
 
 
@@ -89,8 +86,7 @@ def activity_lastweek(course_list=course_list):
     
     pcd_tables = ',\n'.join(['[%s.person_course_day]' % x for x in course_list])
     query = \
-    """SELECT course_id, Count(Distinct username) As nactive, 
-    sum(nevents) As nevents, sum(nvideos_viewed) As nvideo_views, 
+    """SELECT course_id, Count(Distinct username) As nactive, sum(nvideos_viewed) As nvideo_views, 
     sum(nproblems_attempted) As nproblem_attempts, sum(nforum_posts) As nforum_posts 
     FROM {0}
     Where date >= '{1}'
@@ -104,7 +100,7 @@ def activity_lastweek(course_list=course_list):
         FROM [UBCx__UseGen_1x__1T2016.person_item] 
         Where Date(date) >= '{0}'""".format(week_ago.strftime('%Y-%m-%d'))
         value = pd.io.gbq.read_gbq(query, project_id='ubcxdata', verbose=False, 
-                                   private_key='ubcxdata.json').values[0][0]
+                                   private_key='ubcxdata.json').fillna(0).values[0][0]
         activity.ix['UBCx/UseGen.1x/1T2016', 'nproblem_attempts'] = int(value)
 
     if 'UBCx__UseGen_2x__1T2016' in course_list:
@@ -113,12 +109,15 @@ def activity_lastweek(course_list=course_list):
         FROM [UBCx__UseGen_2x__1T2016.person_item] 
         Where Date(date) >= '{0}'""".format(week_ago.strftime('%Y-%m-%d'))
         value = pd.io.gbq.read_gbq(query, project_id='ubcxdata', verbose=False, 
-                                   private_key='ubcxdata.json').values[0][0]
+                                   private_key='ubcxdata.json').fillna(0).values[0][0]
         activity.ix['UBCx/UseGen.2x/1T2016', 'nproblem_attempts'] = int(value)
 
+    activity = pd.DataFrame(activity.T.unstack()).T
+    activity.index = [today.strftime('%Y-%m-%d')]
+
     print activity
-    filename = 'activity' + str(today) + '.csv'
-    activity.to_csv(filename)
+    filepath = '/Users/katrinani/Google Drive/Data scripts/activity_lastweek.csv'
+    appendDFToCSV(activity, filepath)
 
 
 def uptodate(course_list=course_list, prices=prices):
@@ -134,13 +133,29 @@ def uptodate(course_list=course_list, prices=prices):
     Sum(Case When mode='verified' Then 1 Else 0 End) As nverified
     From {0}
     Group By course_id Order By course_id""".format(pc_tables)
-    verify_todate = pd.io.gbq.read_gbq(query, project_id='ubcxdata', verbose=False, private_key='ubcxdata.json')
-    verify_todate['pct_verified'] = verify_todate.nverified / verify_todate.nregistered
-    verify_todate['revenue_todate'] = prices * verify_todate.nverified
-    verify_todate.set_index('course_id', inplace=True)
+    uptodate = pd.io.gbq.read_gbq(query, project_id='ubcxdata', verbose=False, private_key='ubcxdata.json')
+    uptodate['pct_verified'] = uptodate.nverified / uptodate.nregistered
+    uptodate['revenue_todate'] = prices * uptodate.nverified
+    uptodate.set_index('course_id', inplace=True)
 
-    print verify_todate
-    filename = 'uptodate' + str(today) + '.csv'
-    verify_todate.to_csv(filename)
+    uptodate = pd.DataFrame(uptodate.T.unstack()).T
+    uptodate.index = [today.strftime('%Y-%m-%d')]
+
+    print uptodate
+    filepath = '/Users/katrinani/Google Drive/Data scripts/register_verify_revenue_utd.csv'
+    appendDFToCSV(uptodate, filepath)
+
+
+
+
+if __name__ == "__main__":
+
+    # print "Number of students who enrolled, unenrolled and verified during the last week:"
+    enroll_unenroll_verify()
+    # print "Number of students active, nevents, nvideo_viewed, nproblem_attempted and nforum_posts during last week:"
+    activity_lastweek()
+    # print "Number of students registered, verifed, pct_verified and revenue up-to-date"
+    uptodate()
+
 
 
