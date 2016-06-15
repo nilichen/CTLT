@@ -17,7 +17,7 @@ def homepage_courses():
         pos = 1
         ind = True
         for entry in data:
-            if entry["attributes"]["course_org"] == "UBCx":
+            if entry['organizations'][0]['display_name'] == "UBCx":
                 ind = False
                 print 'Pos %s: ' % (pos) + entry['title'].strip()
                 f.write('Pos %s: ' % (pos) + entry['title'].strip().encode('utf8') + '\n')

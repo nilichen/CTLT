@@ -54,16 +54,20 @@ def compute_heatmap(surveys, selections, matrix, start, col_names):
     """
     rm = []
     selections2 = selections[:]
+    survey_count = len(surveys)*0.05
+
     for i in range(len(selections2)):
         group_count = surveys.ix[:, i+start].notnull().sum()
-        survey_count = len(surveys)*0.05
         if group_count > survey_count:
             for k, v in matrix.iteritems():
                 v.append(surveys.ix[surveys.ix[:, i+start].notnull(), k].notnull().sum() / group_count)
         else:
             rm.append(selections2[i])
+    for k, v in matrix.iteritems():
+        v.append(surveys.ix[:, k].notnull().sum() / len(surveys))
     for s in rm:
         selections2.remove(s)
+    selections2 = selections2 + ['Overall']
     matrix = pd.DataFrame(matrix)
     matrix.index = selections2
     matrix.columns = col_names
@@ -78,18 +82,25 @@ def cal_goalsmet(surveys, selections, start, col_name):
     start: index of the first column for question about goals in the merged survey
     col_name: name of goalsmet column, e.g. 'Q2_1'
     """
-    def cal_percent(df):
-        return df.goalsmet.value_counts() / len(df)
     
     df = []
+    rm = []
+    selections2 = selections[:]
+    survey_count = len(surveys)*0.05
     for i in range(len(selections)):
-        if surveys.ix[:, i+start].notnull().sum() > len(surveys)*0.05:
+        group_count = surveys.ix[:, i+start].notnull().sum()
+        if group_count > survey_count:
             df.append(pd.DataFrame(data={'Selection': selections[i],
                                          'goalsmet': surveys.ix[surveys.ix[:, i+start].notnull(), col_name]}))
-            
+        else:
+            rm.append(selections2[i])
+    for s in rm:
+        selections2.remove(s)
     goalsmet = pd.concat(df)
-    goalsmet = goalsmet.groupby('Selection').apply(cal_percent).unstack('Selection').fillna(0)
-    goalsmet.loc["Didn't answer"] = 1 - goalsmet.sum(axis=0)
-    col_order = ['Selection', 'Yes and more, the course exceeded my expectations.',
-                'Yes, my goals were met.', 'My goals were somewhat met.', "Didn't answer"]
-    return goalsmet.T.reset_index()[col_order]
+    goalsmet = goalsmet.groupby('Selection').goalsmet.value_counts(normalize=True).unstack('Selection').fillna(0).T
+    col_order = ['Yes and more, the course exceeded my expectations.',
+                'Yes, my goals were met.', 'My goals were somewhat met.']
+    goalsmet = goalsmet.ix[selections2, col_order]
+    goalsmet.loc['Overall'] = surveys[col_name].value_counts(normalize=True)[col_order]
+    
+    return goalsmet
