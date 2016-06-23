@@ -25,17 +25,15 @@ def appendDFToCSV(df, date, csvFilePath):
     data = [date.strftime('%Y-%m-%d')]
     for i in range(len(df)):
         data += map(str, df.ix[i, :].values)
-        data += ['']
 
     if not os.path.isfile(csvFilePath):
         header1 = ['']
         for i in range(len(df)):
             header1 += [df.index[i]] 
-            header1 += [''] * df.shape[1]
+            header1 += [''] * (df.shape[1]-1)
         header2 = ['Date']
         for i in range(len(df)):
             header2 += list(df.columns)[:]
-            header2 += ['']
             
         with open(csvFilePath, 'a') as csvfile:
             writer = csv.writer(csvfile)
@@ -46,55 +44,6 @@ def appendDFToCSV(df, date, csvFilePath):
         with open(csvFilePath, 'a') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(data)
-
-
-def enroll_unenroll_verify(course_list=course_list, date=yesterday, filepath='enroll_unenroll_verify.csv'):
-    """Daily report for number of students who enrolled, unenrolled and verified for the last week"""
-
-    enroll_tables = ',\n'.join(['[%s.enrollment_events]' % x for x in course_list])
-    verify_tables = ',\n'.join(['[%s.person_enrollment_verified]' % x for x in course_list])
-    pc_tables = ',\n'.join(['[%s.person_course]' % x for x in course_list])
-
-    # query enroll, unenroll and verify data from bigquery
-    query = \
-    """SELECT course_id, Date(time) As date, count(*) As num 
-    FROM {0} 
-    Where Date(time) = '{1}' And activated=1 
-    Group By course_id, date 
-    Order by course_id, date""".format(enroll_tables, date.strftime('%Y-%m-%d'))
-    enroll = pd.io.gbq.read_gbq(query, project_id='ubcxdata', verbose=False, private_key='ubcxdata.json')
-
-    query = \
-    """SELECT course_id, Date(time) As date, count(*) As num 
-    FROM {0} 
-    Where Date(time) = '{1}' And deactivated=1 
-    Group By course_id, date 
-    Order by course_id, date""".format(enroll_tables, date.strftime('%Y-%m-%d'))
-    unenroll = pd.io.gbq.read_gbq(query, project_id='ubcxdata', verbose=False, private_key='ubcxdata.json')
-
-    verify_tables = ',\n'.join(['[%s.person_enrollment_verified]' % x for x in course_list])
-    query = \
-    """SELECT course_id, Date(verified_enroll_time) As date, Count(*) As num 
-    FROM {0}
-    Where Date(verified_enroll_time) = '{1}'
-    Group By course_id, date 
-    Order by course_id, date""".format(verify_tables, date.strftime('%Y-%m-%d'))
-    verify = pd.io.gbq.read_gbq(query, project_id='ubcxdata', verbose=False, private_key='ubcxdata.json')
-    # for course in course_list:
-    #     course = course.replace('__', '/').replace('_', '.')
-    #     if course not in verify.course_id.values:
-    #         verify.loc[len(verify)] = [course, week_ago.strftime('%Y-%m-%d'), 0]
-
-    enroll['type'] = 'enroll'
-    unenroll['type'] = 'unenroll'
-    verify['type'] = 'verify'
-    overall = pd.pivot_table(pd.concat([enroll, unenroll, verify]), index='course_id',
-                             columns=['type'], values='num').fillna(0)
-
-    print overall
-    # filepath = '/Users/katrinani/Google Drive/Data scripts/enroll_unenroll_verify.csv'
-    appendDFToCSV(overall, date, filepath)
-
 
 
 def activity_lastweek(course_list=course_list, date=yesterday, filepath='activity_lastweek.csv'):
@@ -116,6 +65,7 @@ def activity_lastweek(course_list=course_list, date=yesterday, filepath='activit
     Group By course_id Order By course_id""".format(pcd_tables, week_ago.strftime('%Y-%m-%d'), date.strftime('%Y-%m-%d'))
     activity = pd.io.gbq.read_gbq(query, project_id='ubcxdata', verbose=False, private_key='ubcxdata.json')
     activity.set_index('course_id', inplace=True)
+    activity[''] = ''
 
     if 'UBCx__UseGen_1x__1T2016' in course_list:
         query = \
@@ -159,6 +109,7 @@ def uptodate(course_list=course_list, prices=prices, date=yesterday, filepath='r
     uptodate['pct_verified'] = uptodate.nverified / uptodate.nregistered
     uptodate['revenue_todate'] = prices * uptodate.nverified
     uptodate.set_index('course_id', inplace=True)
+    uptodate[''] = ''
 
     print uptodate
     # filepath = '/Users/katrinani/Google Drive/Data scripts/register_verify_revenue_utd.csv'
