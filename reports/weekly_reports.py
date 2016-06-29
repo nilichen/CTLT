@@ -3,6 +3,7 @@ import pandas as pd
 import datetime 
 import os
 import csv
+from daily_reports import appendDFToCSV
 
 # currently running courses
 course_list = [
@@ -21,29 +22,7 @@ today = datetime.date.today()
 yesterday = today - datetime.timedelta(days=1)
 # week_ago = today - datetime.timedelta(days=7)
 
-def appendDFToCSV(df, date, csvFilePath):
-    data = [date.strftime('%Y-%m-%d')]
-    for i in range(len(df)):
-        data += map(str, df.ix[i, :].values)
 
-    if not os.path.isfile(csvFilePath):
-        header1 = ['']
-        for i in range(len(df)):
-            header1 += [df.index[i]] 
-            header1 += [''] * (df.shape[1]-1)
-        header2 = ['Date']
-        for i in range(len(df)):
-            header2 += list(df.columns)[:]
-            
-        with open(csvFilePath, 'a') as csvfile:
-            writer = csv.writer(csvfile)
-            writer.writerow(header1)
-            writer.writerow(header2)
-            writer.writerow(data)
-    else:
-        with open(csvFilePath, 'a') as csvfile:
-            writer = csv.writer(csvfile)
-            writer.writerow(data)
 
 
 def activity_lastweek(course_list=course_list, date=yesterday, filepath='activity_lastweek.csv'):
