@@ -180,7 +180,7 @@ today = datetime.date.today()
 # yesterday = today - datetime.timedelta(days=1)
 
 
-def enroll_unenroll_verify(course_list=course_list, date=today, filepath='enroll_unenroll_verify_yd.csv'):
+def enroll_unenroll_verify(course_list=course_list, date=today, filepath='data/enroll_unenroll_verify_yd.csv'):
     """Daily report for number of students who enrolled, unenrolled and verified for the last week"""
     
 #     def promote(course_id):

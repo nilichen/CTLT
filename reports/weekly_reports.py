@@ -2,7 +2,6 @@ from __future__ import division
 import pandas as pd
 import datetime 
 import os
-import csv
 from daily_reports import appendDFToCSV
 
 # currently running courses
@@ -25,7 +24,7 @@ yesterday = today - datetime.timedelta(days=1)
 
 
 
-def activity_lastweek(course_list=course_list, date=yesterday, filepath='activity_lastweek.csv'):
+def activity_lastweek(course_list=course_list, date=yesterday, filepath='data/activity_lastweek.csv'):
     """
     Activity for the last week including number of students active, nevents, 
     nvideo_viewed, nproblem_attempted, nforum_posts;
@@ -46,30 +45,24 @@ def activity_lastweek(course_list=course_list, date=yesterday, filepath='activit
     activity.set_index('course_id', inplace=True)
     activity[''] = ''
 
-    if 'UBCx__UseGen_1x__1T2016' in course_list:
-        query = \
-        """SELECT sum(n_attempts) 
-        FROM [UBCx__UseGen_1x__1T2016.person_item] 
-        Where Date(date)>='{0}' And Date(date)<='{1}'""".format(week_ago.strftime('%Y-%m-%d'), date.strftime('%Y-%m-%d'))
-        value = pd.io.gbq.read_gbq(query, project_id='ubcxdata', verbose=False, 
-                                   private_key='ubcxdata.json').fillna(0).values[0][0]
-        activity.ix['UBCx/UseGen.1x/1T2016', 'nproblem_attempts'] = int(value)
+    for course in course_list:
+        if 'UseGen' in course:
+            query = \
+            """SELECT sum(n_attempts) 
+            FROM [{0}.person_item] 
+            Where Date(date)>='{1}' And Date(date)<='{2}'
+            """.format(course, week_ago.strftime('%Y-%m-%d'), date.strftime('%Y-%m-%d'))
+            value = pd.io.gbq.read_gbq(query, project_id='ubcxdata', verbose=False, 
+                                       private_key='ubcxdata.json').fillna(0).values[0][0]
+            activity.ix[course.replace('__', '/').replace('_', '.'), 'nproblem_attempts'] = int(value)
 
-    if 'UBCx__UseGen_2x__1T2016' in course_list:
-        query = \
-        """SELECT sum(n_attempts) 
-        FROM [UBCx__UseGen_2x__1T2016.person_item] 
-        Where Date(date)>='{0}' And Date(date)<='{1}'""".format(week_ago.strftime('%Y-%m-%d'), date.strftime('%Y-%m-%d'))
-        value = pd.io.gbq.read_gbq(query, project_id='ubcxdata', verbose=False, 
-                                   private_key='ubcxdata.json').fillna(0).values[0][0]
-        activity.ix['UBCx/UseGen.2x/1T2016', 'nproblem_attempts'] = int(value)
-        print 'From {0} to {1}:'.format(week_ago.strftime('%Y-%m-%d'), date.strftime('%Y-%m-%d'))
-        print activity
-        # filepath = '/Users/katrinani/Google Drive/Data scripts/activity_lastweek.csv'
-        appendDFToCSV(activity, date, filepath)
+    print 'From {0} to {1}:'.format(week_ago.strftime('%Y-%m-%d'), date.strftime('%Y-%m-%d'))
+    print activity
+    # filepath = '/Users/katrinani/Google Drive/Data scripts/activity_lastweek.csv'
+    appendDFToCSV(activity, date, filepath)
 
 
-def uptodate(course_list=course_list, prices=prices, date=yesterday, filepath='register_verify_revenue_utd.csv'):
+def uptodate(course_list=course_list, prices=prices, date=yesterday, filepath='data/register_verify_revenue_utd.csv'):
     """
     Up-to-date (last Sunday) information about number of students registered, verifed, % verified, revenue;
     Data (this Monday not included) is updated in bigquery once a week on Monday morning, 
