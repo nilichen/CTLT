@@ -167,13 +167,21 @@ def appendDFToCSV(df, date, csvFilePath, daily=False):
 
 
 course_list = [
-            'UBCx__Marketing1x__3T2015',        
-            'UBCx__Climate1x__2T2016',
+            'UBCx__Marketing1x__3T2015',
+            # 'UBCx__Climate1x__2T2016',
             'UBCx__SPD1x__2T2016',
             'UBCx__SPD2x__2T2016',
             'UBCx__SPD3x__2T2016',
             'UBCx__UseGen_1x__1T2016',
-            'UBCx__UseGen_2x__1T2016'
+            'UBCx__UseGen_2x__1T2016',
+            'UBCx__PSYC_1x__3T2016',
+            'UBCx__PSYC_2x__3T2016',
+            'UBCx__PSYC_3x__3T2016',
+            'UBCx__PSYC_4x__1T2017',
+            'UBCx__PSYC_5x__1T2017',
+            'UBCx__PSYC_6x__1T2017',
+            'UBCx__ReligionX__1T2017',
+            'UBCx__ITSx__3T2016',
 ]
 
 today = datetime.date.today()
@@ -194,7 +202,7 @@ def enroll_unenroll_verify(course_list=course_list, date=today, filepath='data/e
     yesterday = date - datetime.timedelta(days=1)
     enroll_tables = ',\n'.join(['[%s.enrollment_events]' % x for x in course_list])
     verify_tables = ',\n'.join(['[%s.person_enrollment_verified]' % x for x in course_list])
-    pc_tables = ',\n'.join(['[%s.person_course]' % x for x in course_list])
+    # pc_tables = ',\n'.join(['[%s.person_course]' % x for x in course_list])
 
     # query enroll, unenroll and verify data from bigquery
     query = \
