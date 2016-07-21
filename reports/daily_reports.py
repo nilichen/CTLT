@@ -4,7 +4,8 @@ import datetime
 import pandas as pd
 from bs4 import BeautifulSoup
 import re
-import csv
+from openpyxl import Workbook, load_workbook
+# import csv
 
 import os
 import httplib2
@@ -48,6 +49,7 @@ def get_credentials():
             credentials = tools.run(flow, store)
         print 'Storing credentials to ' + credential_path
     return credentials
+
 
 def get_content(date):
     tomorrow = date + datetime.timedelta(days=1)
@@ -122,48 +124,70 @@ def onHomepage(org='UBCx'):
     return homepage
 
 
-def appendDFToCSV(df, date, csvFilePath, daily=False):
-    data = [date.strftime('%Y-%m-%d')]
-    if daily:
-        homepage = onHomepage()
-        feature = featured()
-        content = get_content(date)
-        emaillist = inEmail(content)
+def appendToExcel(sheet_name, df, filepath):
+    if not os.path.exists(filepath):
+        wb = Workbook()
+        wb.save(filename = filepath)
 
-        promote = ''
-        for k, v in homepage.iteritems():
-            promote += 'Homepage %s: %s; ' % (k, v)
-        for k, v in emaillist.iteritems():
-            promote += 'Email %s: %s; ' % (k, v)
-        for k, v in feature.iteritems():
-            promote += 'Feature %s: %s; ' % (k, v)
-        data += [promote]
-        
-    for i in range(len(df)):
-        data += map(str, df.ix[i, :].values)
-
-    if not os.path.isfile(csvFilePath):
-        header1 = ['']
-        if daily:
-            header1 += ['']
-        for i in range(len(df)):
-            header1 += [df.index[i]] 
-            header1 += [''] * (df.shape[1]-1)
-        header2 = ['Date']
-        if daily:
-            header2 += ['Promote']
-        for i in range(len(df)):
-            header2 += list(df.columns)[:]
-            
-        with open(csvFilePath, 'a') as csvfile:
-            writer = csv.writer(csvfile)
-            writer.writerow(header1)
-            writer.writerow(header2)
-            writer.writerow(data)
+    sheet_names = pd.ExcelFile(filepath).sheet_names
+    if sheet_name in sheet_names:
+        pre = pd.read_excel(filepath, sheet_name)
+        # course.Date = course.Date.dt.date       
+        startrow = len(pre) + 1
+        header = False
     else:
-        with open(csvFilePath, 'a') as csvfile:
-            writer = csv.writer(csvfile)
-            writer.writerow(data)
+        startrow = 0
+        header = True
+
+    book = load_workbook(filepath)
+    writer = pd.ExcelWriter(filepath, engine='openpyxl') 
+    writer.book = book
+    writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
+    df.to_excel(writer, sheet_name, startrow=startrow, header=header, index=False)
+    writer.save()
+
+# def appendDFToCSV(df, date, csvFilePath, daily=False):
+#     data = [date.strftime('%Y-%m-%d')]
+#     if daily:
+#         homepage = onHomepage()
+#         feature = featured()
+#         content = get_content(date)
+#         emaillist = inEmail(content)
+
+#         promote = ''
+#         for k, v in homepage.iteritems():
+#             promote += 'Homepage %s: %s; ' % (k, v)
+#         for k, v in emaillist.iteritems():
+#             promote += 'Email %s: %s; ' % (k, v)
+#         for k, v in feature.iteritems():
+#             promote += 'Feature %s: %s; ' % (k, v)
+#         data += [promote]
+        
+#     for i in range(len(df)):
+#         data += map(str, df.ix[i, :].values)
+
+#     if not os.path.isfile(csvFilePath):
+#         header1 = ['']
+#         if daily:
+#             header1 += ['']
+#         for i in range(len(df)):
+#             header1 += [df.index[i]] 
+#             header1 += [''] * (df.shape[1]-1)
+#         header2 = ['Date']
+#         if daily:
+#             header2 += ['Promote']
+#         for i in range(len(df)):
+#             header2 += list(df.columns)[:]
+            
+#         with open(csvFilePath, 'a') as csvfile:
+#             writer = csv.writer(csvfile)
+#             writer.writerow(header1)
+#             writer.writerow(header2)
+#             writer.writerow(data)
+#     else:
+#         with open(csvFilePath, 'a') as csvfile:
+#             writer = csv.writer(csvfile)
+#             writer.writerow(data)
 
 
 course_list = [
@@ -185,71 +209,50 @@ course_list = [
 ]
 
 today = datetime.date.today()
-# yesterday = today - datetime.timedelta(days=1)
+yesterday = today - datetime.timedelta(days=1)
 
 
-def enroll_unenroll_verify(course_list=course_list, date=today, filepath='data/enroll_unenroll_verify_yd.csv'):
-    """Daily report for number of students who enrolled, unenrolled and verified for the last week"""
-    
-#     def promote(course_id):
-#         course_no = re.match('UBCx\/(.+)\/', course_id).groups()[0]
-#         content = ''
-#         if course_no in homepage.keys():
-#             content += 'Homepage: %s ' % homepage[course_no]
-#         if course_no in feature.keys():
-#             content += 'Feature: %s ' % feature[course_no]
-#         return content
-    yesterday = date - datetime.timedelta(days=1)
-    enroll_tables = ',\n'.join(['[%s.enrollment_events]' % x for x in course_list])
-    verify_tables = ',\n'.join(['[%s.person_enrollment_verified]' % x for x in course_list])
-    # pc_tables = ',\n'.join(['[%s.person_course]' % x for x in course_list])
+def enroll_unenroll_verify(course_list=course_list, start_date=yesterday, end_date=yesterday, 
+                           filepath = 'data/enroll_unenroll_verify.xlsx'):
 
-    # query enroll, unenroll and verify data from bigquery
-    query = \
-    """SELECT course_id, Date(time) As date, count(*) As num 
-    FROM {0} 
-    Where Date(time) = '{1}' And activated=1 
-    Group By course_id, date 
-    Order by course_id, date""".format(enroll_tables, yesterday.strftime('%Y-%m-%d'))
-    enroll = pd.io.gbq.read_gbq(query, project_id='ubcxdata', verbose=False, private_key='ubcxdata.json')
-
-    query = \
-    """SELECT course_id, Date(time) As date, count(*) As num 
-    FROM {0} 
-    Where Date(time) = '{1}' And deactivated=1 
-    Group By course_id, date 
-    Order by course_id, date""".format(enroll_tables, yesterday.strftime('%Y-%m-%d'))
-    unenroll = pd.io.gbq.read_gbq(query, project_id='ubcxdata', verbose=False, private_key='ubcxdata.json')
-
-    verify_tables = ',\n'.join(['[%s.person_enrollment_verified]' % x for x in course_list])
-    query = \
-    """SELECT course_id, Date(verified_enroll_time) As date, Count(*) As num 
-    FROM {0}
-    Where Date(verified_enroll_time) = '{1}'
-    Group By course_id, date 
-    Order by course_id, date""".format(verify_tables, yesterday.strftime('%Y-%m-%d'))
-    verify = pd.io.gbq.read_gbq(query, project_id='ubcxdata', verbose=False, private_key='ubcxdata.json')
-    # for course in course_list:
-    #     course = course.replace('__', '/').replace('_', '.')
-    #     if course not in verify.course_id.values:
-    #         verify.loc[len(verify)] = [course, week_ago.strftime('%Y-%m-%d'), 0]
-
-    enroll['type'] = 'enroll'
-    unenroll['type'] = 'unenroll'
-    verify['type'] = 'verify'
-    overall = pd.pivot_table(pd.concat([enroll, unenroll, verify]), index='course_id',
-                             columns=['type'], values='num').fillna(0)
+    for course_id in course_list:
+        query = """
+        Select Date(time) As Date, Sum(Case When activated Then 1 Else 0 End) As enroll,
+        Sum(Case When deactivated Then 1 Else 0 End) As unenroll, 
+        Sum(Case When mode='verified' and not activated and mode_changed Then 1 Else 0 End) As verify
+        From [{0}.enrollment_events]
+        Where Date(time) Between '{1}' And '{2}'
+        Group By Date
+        Order By Date""".format(course_id, start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'))
+        df = pd.io.gbq.read_gbq(query, project_id='ubcxdata', verbose=False) 
+        df.Date = pd.to_datetime(df.Date, format='%Y-%m-%d').dt.date
+        
+        appendToExcel(course_id, df, filepath)
 
 
-    overall[''] = ''
-    print overall
-    # filepath = '/Users/katrinani/Google Drive/Data scripts/enroll_unenroll_verify.csv'
-    appendDFToCSV(overall, date, filepath, daily=True)
+def promote(filepath = 'data/enroll_unenroll_verify.xlsx'):
+    homepage = onHomepage()
+    feature = featured()
+    content = get_content(today)
+    emaillist = inEmail(content)
 
+    promote = ''
+    for k, v in homepage.iteritems():
+        promote += 'Homepage %s: %s; ' % (k, v)
+    for k, v in emaillist.iteritems():
+        promote += 'Email %s: %s; ' % (k, v)
+    for k, v in feature.iteritems():
+        promote += 'Feature %s: %s; ' % (k, v)
+
+    if promote:
+        df = pd.DataFrame({'Date': today, 'Promote': promote}, index=[1])
+        df.Date = pd.to_datetime(df.Date, format='%Y-%m-%d').dt.date
+        appendToExcel('promote', df, filepath)
 
 
 
 if __name__=="__main__":
 
     # homepage_courses(filepath='/Users/katrinani/Google Drive/Data scripts/homepage_courses.txt')
-    enroll_unenroll_verify(filepath='/Users/katrinani/Google Drive/Data scripts/enroll_unenroll_verify_yd.csv')
+    enroll_unenroll_verify(filepath='/Users/katrinani/Google Drive/Data scripts/enroll_unenroll_verify.xlsx')
+    promote(filepath = '/Users/katrinani/Google Drive/Data scripts/enroll_unenroll_verify.xlsx')
