@@ -1,4 +1,4 @@
-## How to use
+## Things to note
 
 - python version 2.7
 
