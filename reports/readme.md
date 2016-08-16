@@ -1,52 +1,19 @@
 ## How to use
 
-- **Dependency**: [pandas](https://github.com/pydata/pandas), recommend to install [Anaconda](https://www.continuum.io/downloads)
+- python version 2.7
 
-- **Default course_list**: currently active courses:
-  - 'UBCx/Marketing1x/3T2015'
-  - 'UBCx/Climate1x/2T2016',
-  - 'UBCx/SPD1x/2T2016',
-  - 'UBCx/SPD2x/2T2016',
-  - 'UBCx/SPD3x/2T2016',
-  - 'UBCx/UseGen.1x/1T2016',
-  - 'UBCx/UseGen.2x/1T2016'
+- libraries: pandas, BeautifulSoup, json, urllib, datetime, re, openpyxl, os, httplib2, apiclient, oauth2client, base64, email. Recommend to install [Anaconda](https://www.continuum.io/downloads)
 
+- creates and updates
+  - enroll_unenroll_verify.xlsx daily at 3 pm: number students enrolled, unenrolled and verified on the day
+  - activity_lastweek.xlsx weekly on Monday at 3 pm: activity during the last week including number of students active, nevents, nvideo_viewed, nproblem_attempted, nforum_posts
+  - register_verify_revenue_utd.xlsx weekly on Monday at 3 pm: up-to-date (last Sunday) information about total number of students registered and verified, % students verified and revenue up-to-date
 
-- **homepage_courses()**: run daily for a list of popular courses on the [homepage](https://www.edx.org/) on that day
+- only change the course_list in daily_reports.py OR course_list and corresponding prices in weekly_reports.py if needed
 
-- **daily_lastweek()**: can run daily (in the afternoon) for information about number students enrolled, unenrolled and verified for the last week
+- schedule: crontab -e
 
-- **activity_lastweek()**: run weekly (Monday afternoon) for activity information during the last week including number of students active, total number of events, total number of video views, problem attempts and forum posts
-
-- **uptodate()**: run weekly (Monday afternoon because data in bigquery is updated once a week on Monday Morning) for up-to-date (last Sunday) information about total number of students registered and verified, % students verified and revenue up-to-date
-
-**Example use:**
-
-- put the credential **'ubcxdata.json'** in the reports directory
-
-- cd to reports directory and run python
-
-- default course_list
-
-~~~~
-from reports import *
-
-homepage_courses()  # append date and the list of courses in homepage_courses.txt
-daily_lastweek()    # generates daily+date.csv (eg. daily2016-06-01.csv)
-activity_lastweek() # generates activity+date.csv (eg. activity2016-06-01.csv)
-uptodate()          # generates uptodate+date.csv (eg. uptodate2016-06-01.csv)
-~~~~
-- specify courses
-
-~~~~
-from reports import *
-
-course_list = [ 'UBCx__Marketing1x__3T2015',  'UBCx__Climate1x__2T2016',
-                'UBCx__SPD1x__2T2016', 'UBCx__SPD2x__2T2016', 'UBCx__SPD3x__2T2016']
-prices = [50, 49, 49, 49, 49]
-
-# homepage_courses()
-daily_lastweek(course_list)
-activity_lastweek(course_list)
-uptodate(course_list, prices)
-~~~~
+~~~
+0 15 * * 1 source /Users/katrinani/.bash_profile; /Users/katrinani/Documents/CTLT/analysis/reports/weekly.sh
+0 15 * * * source /Users/katrinani/.bash_profile; /Users/katrinani/Documents/CTLT/analysis/reports/daily.sh
+~~~

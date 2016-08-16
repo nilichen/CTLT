@@ -16,6 +16,29 @@ from oauth2client import tools
 import base64
 import email
 
+# only change the course_list if needed
+course_list = [
+            'UBCx__Marketing1x__3T2015',
+            # 'UBCx__Climate1x__2T2016',
+            'UBCx__SPD1x__2T2016',
+            'UBCx__SPD2x__2T2016',
+            'UBCx__SPD3x__2T2016',
+            'UBCx__UseGen_1x__1T2016',
+            'UBCx__UseGen_2x__1T2016',
+            'UBCx__PSYC_1x__3T2016',
+            'UBCx__PSYC_2x__3T2016',
+            'UBCx__PSYC_3x__3T2016',
+            'UBCx__PSYC_4x__1T2017',
+            'UBCx__PSYC_5x__1T2017',
+            'UBCx__PSYC_6x__1T2017',
+            'UBCx__ReligionX__1T2017',
+            'UBCx__ITSx__3T2016',
+]
+
+today = datetime.date.today()
+yesterday = today - datetime.timedelta(days=1)
+# dictionary to store queried results for all the courses in the course_list
+sheets = {}
 
 SCOPES = 'https://www.googleapis.com/auth/gmail.readonly'
 CLIENT_SECRET_FILE = 'client_secret.json'
@@ -23,7 +46,8 @@ APPLICATION_NAME = 'Gmail API Python Quickstart'
 
 
 def get_credentials():
-    """Gets valid user credentials from storage.
+    """
+    Gets valid user credentials from storage.
 
     If nothing has been stored, or if the stored credentials are invalid,
     the OAuth2 flow is completed to obtain the new credentials.
@@ -52,6 +76,12 @@ def get_credentials():
 
 
 def get_content(date):
+    """
+    Given the date, query the email sent from news@edx.org on that day.
+
+    Returns:
+        string of html content on that email, if no email on that day, return an empty string
+    """
     tomorrow = date + datetime.timedelta(days=1)
     credentials = get_credentials()
     http = credentials.authorize(httplib2.Http())
@@ -75,7 +105,15 @@ def get_content(date):
 # content = get_content()
 
 def inEmail(content, org='UBCx'):
+    """
+    Given the string of html content, find the courses that belong to the corresponding organization.
+
+    Returns:
+        dictionary {position of the course on the webpage: course_name}
+        if no courses are found in the email, return an empty dictionary
+    """
     email = {}
+    # if content is empty string, skip
     if content:
         pos = 1
         soup = BeautifulSoup(content)
@@ -100,6 +138,13 @@ def inEmail(content, org='UBCx'):
 
 
 def featured(org='UBCx'):    
+    """
+    Find courses that belong to the corresponding organization on the featured webpage https://www.edx.org/course
+    
+    Returns:
+        dictionary {position of the featured course: course_name}
+        if no featured courses are found, returen an empty dictionary
+    """
     feature = {}
     r = urllib2.urlopen('https://www.edx.org/course').read()
     soup = BeautifulSoup(r, 'html.parser')
@@ -113,6 +158,13 @@ def featured(org='UBCx'):
 
 
 def onHomepage(org='UBCx'):
+    """
+    Find courses that belong to the corresponding organization on the homepage https://www.edx.org/
+
+    Returns:
+        dictionary {position of the course on homepage: course_name}
+        if no courses are found on homepage, returen an empty dictionary
+    """
     homepage = {}
     url = 'https://www.edx.org/api/discovery/v1/cards?limit=12&tags=14e5ea80-f725-4cd6-82f6-6d2bd63d5159'
     data = json.loads(urllib2.urlopen(url).read())
@@ -124,97 +176,40 @@ def onHomepage(org='UBCx'):
     return homepage
 
 
-def appendToExcel(sheet_name, df, filepath):
+def appendToExcel(sheets, filepath):
+    """
+    Iterater over the sheets dictionary, if sheet corresponding to a certain course not present in the workbook, 
+    create a new sheet with the queried result, otherwise, append the queried result to an existing sheet.
+    Create a workbook if not existed.
+    """
     if not os.path.exists(filepath):
         wb = Workbook()
         wb.save(filename = filepath)
-
-    sheet_names = pd.ExcelFile(filepath).sheet_names
-    if sheet_name in sheet_names:
-        pre = pd.read_excel(filepath, sheet_name)
-        # course.Date = course.Date.dt.date       
-        startrow = len(pre) + 1
-        header = False
-    else:
-        startrow = 0
-        header = True
-
     book = load_workbook(filepath)
     writer = pd.ExcelWriter(filepath, engine='openpyxl') 
     writer.book = book
     writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
-    df.to_excel(writer, sheet_name, startrow=startrow, header=header, index=False)
+    
+    sheet_names = pd.ExcelFile(filepath).sheet_names
+    for sheet_name, df in sheets.iteritems():
+        if sheet_name in sheet_names:
+            pre = pd.read_excel(filepath, sheet_name)
+            # course.Date = course.Date.dt.date       
+            startrow = len(pre) + 1
+            header = False
+        else:
+            startrow = 0
+            header = True
+        df.to_excel(writer, sheet_name, startrow=startrow, header=header, index=False)
+        
     writer.save()
 
-# def appendDFToCSV(df, date, csvFilePath, daily=False):
-#     data = [date.strftime('%Y-%m-%d')]
-#     if daily:
-#         homepage = onHomepage()
-#         feature = featured()
-#         content = get_content(date)
-#         emaillist = inEmail(content)
 
-#         promote = ''
-#         for k, v in homepage.iteritems():
-#             promote += 'Homepage %s: %s; ' % (k, v)
-#         for k, v in emaillist.iteritems():
-#             promote += 'Email %s: %s; ' % (k, v)
-#         for k, v in feature.iteritems():
-#             promote += 'Feature %s: %s; ' % (k, v)
-#         data += [promote]
-        
-#     for i in range(len(df)):
-#         data += map(str, df.ix[i, :].values)
-
-#     if not os.path.isfile(csvFilePath):
-#         header1 = ['']
-#         if daily:
-#             header1 += ['']
-#         for i in range(len(df)):
-#             header1 += [df.index[i]] 
-#             header1 += [''] * (df.shape[1]-1)
-#         header2 = ['Date']
-#         if daily:
-#             header2 += ['Promote']
-#         for i in range(len(df)):
-#             header2 += list(df.columns)[:]
-            
-#         with open(csvFilePath, 'a') as csvfile:
-#             writer = csv.writer(csvfile)
-#             writer.writerow(header1)
-#             writer.writerow(header2)
-#             writer.writerow(data)
-#     else:
-#         with open(csvFilePath, 'a') as csvfile:
-#             writer = csv.writer(csvfile)
-#             writer.writerow(data)
-
-
-course_list = [
-            'UBCx__Marketing1x__3T2015',
-            # 'UBCx__Climate1x__2T2016',
-            'UBCx__SPD1x__2T2016',
-            'UBCx__SPD2x__2T2016',
-            'UBCx__SPD3x__2T2016',
-            'UBCx__UseGen_1x__1T2016',
-            'UBCx__UseGen_2x__1T2016',
-            'UBCx__PSYC_1x__3T2016',
-            'UBCx__PSYC_2x__3T2016',
-            'UBCx__PSYC_3x__3T2016',
-            'UBCx__PSYC_4x__1T2017',
-            'UBCx__PSYC_5x__1T2017',
-            'UBCx__PSYC_6x__1T2017',
-            'UBCx__ReligionX__1T2017',
-            'UBCx__ITSx__3T2016',
-]
-
-today = datetime.date.today()
-yesterday = today - datetime.timedelta(days=1)
-
-
-def enroll_unenroll_verify(course_list=course_list, start_date=yesterday, end_date=yesterday, 
-                           filepath = 'data/enroll_unenroll_verify.xlsx'):
-
+def enroll_unenroll_verify(course_list=course_list, start_date=yesterday, end_date=yesterday):
+    """
+    Iterate over the course_list and query number students enrolled, unenrolled 
+    and verified on the day, store the corresponding result in the sheets dictionary.
+    """
     for course_id in course_list:
         query = """
         Select Date(time) As Date, Sum(Case When activated Then 1 Else 0 End) As enroll,
@@ -226,11 +221,19 @@ def enroll_unenroll_verify(course_list=course_list, start_date=yesterday, end_da
         Order By Date""".format(course_id, start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'))
         df = pd.io.gbq.read_gbq(query, project_id='ubcxdata', verbose=False) 
         df.Date = pd.to_datetime(df.Date, format='%Y-%m-%d').dt.date
+        sheets[course_id] = df
         
-        appendToExcel(course_id, df, filepath)
+    # appendToExcel(sheets, df, filepath)
 
 
-def promote(filepath = 'data/enroll_unenroll_verify.xlsx'):
+def promote():
+    """
+    Find promoted courses on the day.
+
+    Returns:
+        string 'Homepage/Email/Feature position: course_name'
+        if no courses are found, return an empty string
+    """
     homepage = onHomepage()
     feature = featured()
     content = get_content(today)
@@ -247,12 +250,14 @@ def promote(filepath = 'data/enroll_unenroll_verify.xlsx'):
     if promote:
         df = pd.DataFrame({'Date': today, 'Promote': promote}, index=[1])
         df.Date = pd.to_datetime(df.Date, format='%Y-%m-%d').dt.date
-        appendToExcel('promote', df, filepath)
+        sheets['promote'] = df
+        # appendToExcel('promote', df, filepath)
 
 
 
 if __name__=="__main__":
 
     # homepage_courses(filepath='/Users/katrinani/Google Drive/Data scripts/homepage_courses.txt')
-    enroll_unenroll_verify(filepath='/Users/katrinani/Google Drive/Data scripts/enroll_unenroll_verify.xlsx')
-    promote(filepath = '/Users/katrinani/Google Drive/Data scripts/enroll_unenroll_verify.xlsx')
+    enroll_unenroll_verify()
+    promote()
+    appendToExcel(sheets, '/Users/katrinani/Google Drive/Data scripts/enroll_unenroll_verify.xlsx')

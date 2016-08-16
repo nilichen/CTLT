@@ -15,6 +15,7 @@ course_list = [
             'UBCx__UseGen_2x__1T2016'
 ]
 # verification prices
+# only need to change course_list and corresponding prices if needed
 prices = {            
         'UBCx__Marketing1x__3T2015': 49,        
         # 'UBCx__Climate1x__2T2016': 50,
@@ -26,24 +27,24 @@ prices = {
 }
 
 today = datetime.date.today()
-yesterday = today - datetime.timedelta(days=1)
-# week_ago = today - datetime.timedelta(days=7)
+yesterday = today - datetime.timedelta(days=2)
+# dictionaries to store the queried results for courses in the course_list
+activities = {}
+uptodates = {}
 
 
 
 
-def activity_lastweek(course_list=course_list, dates=[yesterday], filepath='data/activity_lastweek.xlsx'):
+def activity_lastweek(course_list=course_list, dates=[yesterday]):
     """
-    Activity for the last week including number of students active, nevents, 
-    nvideo_viewed, nproblem_attempted, nforum_posts;
-    Data is updated in bigquery once a week on Monday morning, 
-    run the command on Monday afternoon => activity for the last week;
-    Nproblem_attempts for useGen.1x and useGen.2x need recalculate 
-    due to different implementation of course structure.
+    Query activity during the last week including number of students active, nevents, 
+    nvideo_viewed, nproblem_attempted, nforum_posts for each course in the course_list,
+    and store the result in the activities dictionary;
     """
    
     for course_id in course_list:
         dfs = []
+        # recalculate nproblem_attempts for useGen.1x and useGen.2x due to different implementation of course structure
         if 'UseGen' in course_id:
             query = """
             SELECT '{2}' As Date, Count(Distinct username) As nactive, sum(nvideos_viewed) As nvideo_views, 
@@ -77,14 +78,13 @@ def activity_lastweek(course_list=course_list, dates=[yesterday], filepath='data
         activity = pd.concat(dfs)
         activity.Date = pd.to_datetime(activity.Date, format='%Y-%m-%d').dt.date
         # print activity
-        appendToExcel(course_id, activity.fillna(0), filepath)
+        activities[course_id] = activity
 
 
-def uptodate(course_list=course_list, prices=prices, dates=[yesterday], filepath='data/register_verify_revenue_utd.xlsx'):
+def uptodate(course_list=course_list, prices=prices, dates=[yesterday]):
     """
-    Up-to-date (last Sunday) information about number of students registered, verifed, % verified, revenue;
-    Data (this Monday not included) is updated in bigquery once a week on Monday morning, 
-    run the command on Monday afternoon.
+    Query up-to-date (last Sunday) information about number of students registered, verifed, % verified, revenue
+    for each course in the course_list, and store the result in the uptodates dictionary.
     """
     for course_id in course_list:
         dfs = []
@@ -98,19 +98,18 @@ def uptodate(course_list=course_list, prices=prices, dates=[yesterday], filepath
         uptodate = pd.concat(dfs)
         uptodate['pct_verified'] = uptodate.nverified / uptodate.nregistered
         uptodate['revenue_todate'] = prices[course_id] * uptodate.nverified
-        appendToExcel(course_id, uptodate, filepath)
+        # appendToExcel(course_id, uptodate, filepath)
+        uptodates[course_id] = uptodate
 
 
 
 
 if __name__ == "__main__":
 
-    # print "Number of students who enrolled, unenrolled and verified during the last week:"
-    # enroll_unenroll_verify()
-    # print "Number of students active, nevents, nvideo_viewed, nproblem_attempted and nforum_posts during last week:"
-    activity_lastweek(filepath='/Users/katrinani/Google Drive/Data scripts/activity_lastweek.csv')
-    # print "Number of students registered, verifed, pct_verified and revenue up-to-date"
-    uptodate(filepath='/Users/katrinani/Google Drive/Data scripts/register_verify_revenue_utd.csv')
+    activity_lastweek()
+    uptodate()
+    appendToExcel(activities, '/Users/katrinani/Google Drive/Data scripts/activity_lastweek.xlsx')
+    appendToExcel(uptodates, '/Users/katrinani/Google Drive/Data scripts/register_verify_revenue_utd.xlsx')
 
 
 
