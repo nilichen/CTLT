@@ -1,5 +1,7 @@
 ## Things to note
 
+- credential file 'ubcdata.json' in the reports directory
+
 - python version 2.7
 
 - libraries: pandas, BeautifulSoup, json, urllib, datetime, re, openpyxl, os, httplib2, apiclient, oauth2client, base64, email. Recommend to install [Anaconda](https://www.continuum.io/downloads)
