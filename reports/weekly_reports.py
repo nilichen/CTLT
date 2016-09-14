@@ -68,8 +68,7 @@ def activity_lastweek(course_list=course_list, dates=[yesterday]):
             SELECT '{2}' As Date, Count(Distinct username) As nactive, sum(nvideos_viewed) As nvideo_views, 
             sum(nproblems_attempted) As nproblem_attempts, sum(nforum_posts) As nforum_posts 
             FROM [{0}.person_course_day]
-            Where date>='{1}' And date<='{2}'
-            """
+            Where date Between '{1}' And '{2}'"""
             
         for date in dates:
             week_ago = date - datetime.timedelta(days=6)
@@ -83,7 +82,7 @@ def activity_lastweek(course_list=course_list, dates=[yesterday]):
 
 def uptodate(course_list=course_list, prices=prices, dates=[yesterday]):
     """
-    Query up-to-date (last Sunday) information about number of students registered, verifed, % verified, revenue
+    Query up-to-date (last Saturday) information about number of students registered, verifed, % verified, revenue
     for each course in the course_list, and store the result in the uptodates dictionary.
     """
     for course_id in course_list:

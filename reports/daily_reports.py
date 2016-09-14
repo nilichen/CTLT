@@ -116,7 +116,7 @@ def inEmail(content, org='UBCx'):
     # if content is empty string, skip
     if content:
         pos = 1
-        soup = BeautifulSoup(content)
+        soup = BeautifulSoup(content, 'html.parser')
         tds = soup.find_all('td', class_='mcnTextContent')
         for td in tds:
             if td.find('span'):
