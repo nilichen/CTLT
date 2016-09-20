@@ -16,6 +16,12 @@ from oauth2client import tools
 import base64
 import email
 
+try:
+    import argparse
+    flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
+except ImportError:
+    flags = None
+
 # only change the course_list if needed
 course_list = [
             'UBCx__Marketing1x__3T2015',
@@ -221,7 +227,7 @@ def enroll_unenroll_verify(course_list=course_list, start_date=yesterday, end_da
         Where Date(time) Between '{1}' And '{2}'
         Group By Date
         Order By Date""".format(course_id, start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'))
-        df = pd.io.gbq.read_gbq(query, project_id='ubcxdata', verbose=False) 
+        df = pd.io.gbq.read_gbq(query, project_id='ubcxdata', verbose=False, private_key='ubcxdata.json') 
         df.Date = pd.to_datetime(df.Date, format='%Y-%m-%d').dt.date
         sheets[course_id] = df
         
@@ -262,4 +268,4 @@ if __name__=="__main__":
     # homepage_courses(filepath='/Users/katrinani/Google Drive/Data scripts/homepage_courses.txt')
     enroll_unenroll_verify()
     promote()
-    appendToExcel(sheets, '/Users/katrinani/Google Drive/Data scripts/enroll_unenroll_verify.xlsx')
+    appendToExcel(sheets, 'enroll_unenroll_verify.xlsx')#/Users/katrinani/Google Drive/Data scripts/enroll_unenroll_verify.xlsx')
