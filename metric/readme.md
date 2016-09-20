@@ -1,6 +1,6 @@
 ## How to use
 
-To update courses, run the notebook and save as .html:
+**To update courses, run the notebook and save as .html:**
 - for multi_courses: change course_list (for all courses on edX), mooc_list (Moocs) and pe_list (professional education) as needed
 
  ![course_list](images/course_list.png)
@@ -17,7 +17,16 @@ To update courses, run the notebook and save as .html:
 
  ![html](images/html.png)
 
-If want to present as slideshow:
+**To supress warnings:**
+
+Place:
+~~~
+import warnings
+warnings.filterwarnings('ignore')
+~~~
+inside ~/.ipython/profile_default/startup/disable-warnings.py
+
+**If want to present as slideshow:**
 - multi_courses
 ~~~
 ipython nbconvert multi_courses.ipynb --to slides --template slides_reveal.tpl --post serve
