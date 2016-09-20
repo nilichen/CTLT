@@ -268,4 +268,4 @@ if __name__=="__main__":
     # homepage_courses(filepath='/Users/katrinani/Google Drive/Data scripts/homepage_courses.txt')
     enroll_unenroll_verify()
     promote()
-    appendToExcel(sheets, 'enroll_unenroll_verify.xlsx')#/Users/katrinani/Google Drive/Data scripts/enroll_unenroll_verify.xlsx')
+    appendToExcel(sheets, 'Users/katrinani/Google Drive/Data scripts/enroll_unenroll_verify.xlsx')
