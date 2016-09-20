@@ -47,7 +47,9 @@ APPLICATION_NAME = 'Gmail API Python Quickstart'
 
 def get_credentials():
     """
-    Gets valid user credentials from storage.
+    Gets valid user credentials from storage for scraping emails: 
+    need to register in edX with a gmail account, and get credentials from that account.
+    => https://developers.google.com/gmail/api/quickstart/python
 
     If nothing has been stored, or if the stored credentials are invalid,
     the OAuth2 flow is completed to obtain the new credentials.
@@ -107,7 +109,7 @@ def get_content(date):
 def inEmail(content, org='UBCx'):
     """
     Given the string of html content, find the courses that belong to the corresponding organization.
-
+    
     Returns:
         dictionary {position of the course on the webpage: course_name}
         if no courses are found in the email, return an empty dictionary
