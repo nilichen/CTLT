@@ -1,5 +1,5 @@
 #!/bin/bash
 
-cd /Users/katrinani/Documents/CTLT/analysis/reports
+cd /Users/KatrinaNi/Documents/CTLT/analysis/reports
 python weekly_reports.py
 

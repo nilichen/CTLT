@@ -5,14 +5,23 @@ import os
 from daily_reports import appendToExcel
 
 # currently running courses
-course_list = [
-            'UBCx__Marketing1x__3T2015',        
+course_list = course_list = [
+            'UBCx__Marketing1x__3T2015',
             # 'UBCx__Climate1x__2T2016',
             'UBCx__SPD1x__2T2016',
             'UBCx__SPD2x__2T2016',
             'UBCx__SPD3x__2T2016',
             'UBCx__UseGen_1x__1T2016',
-            'UBCx__UseGen_2x__1T2016'
+            'UBCx__UseGen_2x__1T2016',
+            'UBCx__PSYC_1x__3T2016',
+            # 'UBCx__PSYC_2x__3T2016',
+            # 'UBCx__PSYC_3x__3T2016',
+            # 'UBCx__PSYC_4x__1T2017',
+            # 'UBCx__PSYC_5x__1T2017',
+            # 'UBCx__PSYC_6x__1T2017',
+            # 'UBCx__ReligionX__1T2017',
+            'UBCx__ITSx__3T2016',
+            # 'UBCx_CW1_1x_3T2016'
 ]
 # verification prices
 # only need to change course_list and corresponding prices if needed
@@ -23,7 +32,16 @@ prices = {
         'UBCx__SPD2x__2T2016': 49,
         'UBCx__SPD3x__2T2016': 49,
         'UBCx__UseGen_1x__1T2016': 49,
-        'UBCx__UseGen_2x__1T2016': 49
+        'UBCx__UseGen_2x__1T2016': 49,
+        'UBCx__PSYC_1x__3T2016': 49,
+        # 'UBCx__PSYC_2x__3T2016': 49,
+        # 'UBCx__PSYC_3x__3T2016': 49,
+        # 'UBCx__PSYC_4x__1T2017': 49,
+        # 'UBCx__PSYC_5x__1T2017': 49,
+        # 'UBCx__PSYC_6x__1T2017': 49,
+        # 'UBCx__ReligionX__1T2017': 49,
+        'UBCx__ITSx__3T2016': 49,
+        # 'UBCx_CW1_1x_3T2016': 295
 }
 
 today = datetime.date.today()
@@ -107,8 +125,8 @@ if __name__ == "__main__":
 
     activity_lastweek()
     uptodate()
-    appendToExcel(activities, '/Users/katrinani/Google Drive/Data scripts/activity_lastweek.xlsx')
-    appendToExcel(uptodates, '/Users/katrinani/Google Drive/Data scripts/register_verify_revenue_utd.xlsx')
+    appendToExcel(activities, '/Users/KatrinaNi/Google Drive/Data scripts/activity_lastweek.xlsx')
+    appendToExcel(uptodates, '/Users/KatrinaNi/Google Drive/Data scripts/register_verify_revenue_utd.xlsx')
 
 
 

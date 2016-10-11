@@ -39,6 +39,7 @@ course_list = [
             'UBCx__PSYC_6x__1T2017',
             'UBCx__ReligionX__1T2017',
             'UBCx__ITSx__3T2016',
+            # 'UBCx__CW1_1x__3T2016'
 ]
 
 today = datetime.date.today()
@@ -244,14 +245,14 @@ def promote():
     """
     homepage = onHomepage()
     feature = featured()
-    content = get_content(today)
-    emaillist = inEmail(content)
+    # content = get_content(today)
+    # emaillist = inEmail(content)
 
     promote = ''
     for k, v in homepage.iteritems():
         promote += 'Homepage %s: %s; ' % (k, v)
-    for k, v in emaillist.iteritems():
-        promote += 'Email %s: %s; ' % (k, v)
+    # for k, v in emaillist.iteritems():
+    #     promote += 'Email %s: %s; ' % (k, v)
     for k, v in feature.iteritems():
         promote += 'Feature %s: %s; ' % (k, v)
 
@@ -266,6 +267,6 @@ def promote():
 if __name__=="__main__":
 
     # homepage_courses(filepath='/Users/katrinani/Google Drive/Data scripts/homepage_courses.txt')
-    enroll_unenroll_verify()
+    enroll_unenroll_verify()#course_list=['UBCx__CW1_1x__3T2016'], start_date=pd.to_datetime('2016-09-01'), end_date=pd.to_datetime('2016-10-04'))
     promote()
-    appendToExcel(sheets, 'Users/katrinani/Google Drive/Data scripts/enroll_unenroll_verify.xlsx')
+    appendToExcel(sheets, '/Users/KatrinaNi/Google Drive/Data scripts/enroll_unenroll_verify.xlsx')
